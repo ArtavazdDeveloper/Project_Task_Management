@@ -13,6 +13,8 @@ public class User {
     private String name;
     private String surname;
     private String email;
+    private Project project;
     private List<Project> projects;
+    private Task task;
     private List<Task> tasks;
 }

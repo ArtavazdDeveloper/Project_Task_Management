@@ -11,5 +11,6 @@ public interface ProjectRepository {
     void save(Project project);
     void update(Project project);
     void delete(int id);
+    List<Project> findAllByUserId(int userId);
 
 }

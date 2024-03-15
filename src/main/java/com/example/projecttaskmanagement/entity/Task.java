@@ -11,9 +11,14 @@ import lombok.RequiredArgsConstructor;
 public class Task {
 
     private int id;
+    private String name;
     private String description;
     private LocalDate deadline;
     private boolean completed;
     private Project project;
+    private List<Project> projects;
+    private User user;
     private List<User> assignees;
+    
+
 }

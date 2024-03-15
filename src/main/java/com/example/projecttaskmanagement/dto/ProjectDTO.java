@@ -10,10 +10,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProjectDTO {
     
-    private Long id;
+    private int id;
     private String name;
     private String description;
     private LocalDate startDate;
     private LocalDate endDate;
     private List<TaskDTO> tasks;
+    
 }
