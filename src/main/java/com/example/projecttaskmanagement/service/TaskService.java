@@ -24,7 +24,6 @@ public class TaskService {
     public TaskDTO getTaskById(int id) {
         Task task = taskRepository.findById(id);
         if (task == null) {
-            // Обработка случая, когда задача не найдена
             return null;
         }
         return taskMapper.taskToDto(task);
@@ -39,7 +38,6 @@ public class TaskService {
     public TaskDTO updateTask(int id, TaskDTO taskDTO) {
         Task existingTask = taskRepository.findById(id);
         if (existingTask == null) {
-            // Обработка случая, когда задача не найдена
             return null;
         }
 

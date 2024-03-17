@@ -11,9 +11,6 @@ import com.example.projecttaskmanagement.repository.ProjectRepository;
 import lombok.AllArgsConstructor;
 
 
-
-
-
 @AllArgsConstructor
 public class ProjectService {
 
@@ -39,7 +36,6 @@ public class ProjectService {
     public ProjectDTO updateProject(int id, ProjectDTO projectDTO) {
         Project existingProject = projectRepository.findById(id);
         if (existingProject == null) {
-            // Обработка случая, когда проект не найден
             return null;
         }
 

@@ -120,12 +120,11 @@ public class JdbcProjectRepository implements ProjectRepository{
                     project.setId(resultSet.getInt("id"));
                     project.setName(resultSet.getString("name"));
                     project.setDescription(resultSet.getString("description"));
-                    // Set other properties as needed
                     projects.add(project);
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Handle or log the exception as needed
+            e.printStackTrace();
         }
         return projects;
     }

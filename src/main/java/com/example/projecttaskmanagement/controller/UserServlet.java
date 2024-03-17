@@ -5,6 +5,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.List;
 
@@ -26,6 +28,11 @@ public class UserServlet extends HttpServlet{
         this.objectMapper = new ObjectMapper();
     }
 
+    public UserServlet(UserService userService, ObjectMapper objectMapper) {
+        this.userService = userService;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<UserDTO> users = userService.getAllUsers();
@@ -37,13 +44,13 @@ public class UserServlet extends HttpServlet{
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name");
-        String surname = request.getParameter("surname");
-        String email = request.getParameter("email");
-        UserDTO userDTO = new UserDTO();
-        userDTO.setName(name);
-        userDTO.setSurname(surname);
-        userDTO.setEmail(email);
+        BufferedReader reader = request.getReader();
+        StringBuilder jsonBody = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            jsonBody.append(line);
+        }
+        UserDTO userDTO = objectMapper.readValue(jsonBody.toString(), UserDTO.class);
         UserDTO createdUser = userService.createUser(userDTO);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -52,18 +59,24 @@ public class UserServlet extends HttpServlet{
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int userId = Integer.parseInt(request.getParameter("id"));
-        String name = request.getParameter("name");
-        String surname = request.getParameter("surname");
-        String email = request.getParameter("email");
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(userId);
-        userDTO.setName(name);
-        userDTO.setSurname(surname);
-        userDTO.setEmail(email);
-        UserDTO updatedUser = userService.updateUser(userId,userDTO);
+        BufferedReader reader = request.getReader();
+        StringBuilder jsonBody = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            jsonBody.append(line);
+        }
+        UserDTO userDTO = objectMapper.readValue(jsonBody.toString(), UserDTO.class);
+        int userId = userDTO.getId();
+        UserDTO updatedUser = userService.updateUser(userId, userDTO);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), updatedUser);
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int userId = Integer.parseInt(request.getParameter("id"));
+        userService.deleteUser(userId);
+        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 }

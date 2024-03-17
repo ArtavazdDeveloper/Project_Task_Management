@@ -25,11 +25,16 @@ public class ProjectServlet extends HttpServlet{
     private ProjectService projectService;
     private ObjectMapper objectMapper;
 
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        projectService = new ProjectService(new JdbcProjectRepository((DBConnectionProvider) DBConnectionProvider.getConnection()), new ProjectMapperImpl());
-        objectMapper = new ObjectMapper();
+
+
+    public ProjectServlet() {
+        this.projectService = new ProjectService(null, null);
+        this.objectMapper = new ObjectMapper();
+    }
+
+    public ProjectServlet(ProjectService projectService, ObjectMapper objectMapper) {
+        this.projectService = projectService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -88,4 +93,18 @@ public class ProjectServlet extends HttpServlet{
     objectMapper.writeValue(response.getWriter(), updatedProject);
 
     }
+
+    @Override
+protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    String projectIdParam = request.getParameter("id");
+    if (projectIdParam != null) {
+        int projectId = Integer.parseInt(projectIdParam);
+        projectService.deleteProject(projectId);
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().write("Project deleted successfully");
+    } else {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        response.getWriter().write("Project id parameter is required");
+    }
+}
 }
