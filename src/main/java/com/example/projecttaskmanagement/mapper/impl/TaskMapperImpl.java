@@ -18,9 +18,7 @@ public class TaskMapperImpl implements TaskMapper {
         dto.setId(task.getId());
         dto.setName(task.getName());
         dto.setDescription(task.getDescription());
-        dto.setDeadline(task.getDeadline());
         dto.setCompleted(task.isCompleted());
-        dto.setProject(task.getProject());
         return dto;
     }
 
@@ -30,7 +28,6 @@ public class TaskMapperImpl implements TaskMapper {
         task.setId(taskDTO.getId());
         task.setName(taskDTO.getName());
         task.setDescription(taskDTO.getDescription());
-        task.setDeadline(taskDTO.getDeadline());
         task.setCompleted(taskDTO.isCompleted());
         return task;
     }

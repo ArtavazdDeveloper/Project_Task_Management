@@ -1,6 +1,5 @@
 package com.example.projecttaskmanagement.dto;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import lombok.Data;
@@ -13,8 +12,7 @@ public class ProjectDTO {
     private int id;
     private String name;
     private String description;
-    private LocalDate startDate;
-    private LocalDate endDate;
     private List<TaskDTO> tasks;
+    private List<UserDTO> users;
     
 }

@@ -8,9 +8,13 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.dto.ProjectDTO;
@@ -21,90 +25,81 @@ import com.example.projecttaskmanagement.service.ProjectService;
 
 @WebServlet("/projects")
 public class ProjectServlet extends HttpServlet{
-    
-    private ProjectService projectService;
-    private ObjectMapper objectMapper;
+
+    private final ProjectService projectService = new ProjectService();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
 
 
     public ProjectServlet() {
-        this.projectService = new ProjectService(null, null);
-        this.objectMapper = new ObjectMapper();
-    }
 
-    public ProjectServlet(ProjectService projectService, ObjectMapper objectMapper) {
-        this.projectService = projectService;
-        this.objectMapper = objectMapper;
     }
 
     @Override
+
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String projectIdParam = request.getParameter("id");
-        if (projectIdParam != null) {
-            int projectId = Integer.parseInt(projectIdParam);
-            ProjectDTO projectDTO = projectService.getProjectById(projectId);
-            if (projectDTO != null) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                objectMapper.writeValue(response.getWriter(), projectDTO);
-            } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Project not found");
-            }
-        } else {
-            List<ProjectDTO> projects = projectService.getAllProjects();
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            objectMapper.writeValue(response.getWriter(), projects);
-        }
-    }
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name");
-        String description = request.getParameter("description");
-        LocalDate startDate = LocalDate.parse(request.getParameter("startDate"));
-        LocalDate endDate = LocalDate.parse(request.getParameter("endDate"));
-        ProjectDTO projectDTO = new ProjectDTO();
-        projectDTO.setName(name);
-        projectDTO.setDescription(description);
-        projectDTO.setStartDate(startDate);
-        projectDTO.setEndDate(endDate);
-        ProjectDTO createdProject = projectService.createProject(projectDTO);
+        List<ProjectDTO> projects = projectService.getAllProjects();
+        String projectsJson = objectMapper.writeValueAsString(projects);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), createdProject);
+        response.getWriter().write(projectsJson);
     }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        ProjectDTO projectDTO = objectMapper.readValue(request.getReader(), ProjectDTO.class);
+        ProjectDTO createdProject = projectService.createProject(projectDTO);
+        String createdProjectJson = objectMapper.writeValueAsString(createdProject);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(createdProjectJson);
+    }
+
+
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    int projectId = Integer.parseInt(request.getParameter("id")); // Получаем идентификатор проекта из параметра запроса
-    String name = request.getParameter("name");
-    String description = request.getParameter("description");
-    LocalDate startDate = LocalDate.parse(request.getParameter("startDate"));
-    LocalDate endDate = LocalDate.parse(request.getParameter("endDate"));
-    ProjectDTO projectDTO = new ProjectDTO();
-    projectDTO.setId(projectId);
-    projectDTO.setName(name);
-    projectDTO.setDescription(description);
-    projectDTO.setStartDate(startDate);
-    projectDTO.setEndDate(endDate);
-    ProjectDTO updatedProject = projectService.updateProject(projectId, projectDTO);
-    response.setContentType("application/json");
-    response.setCharacterEncoding("UTF-8");
-    objectMapper.writeValue(response.getWriter(), updatedProject);
-
+        BufferedReader reader = request.getReader();
+        StringBuilder jsonBody = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            jsonBody.append(line);
+        }
+        ProjectDTO projectDTO = objectMapper.readValue(jsonBody.toString(), ProjectDTO.class);
+        int projectId = projectDTO.getId();
+        ProjectDTO updatedProject = projectService.updateProject(projectId, projectDTO);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        objectMapper.writeValue(response.getWriter(), updatedProject);
     }
+
 
     @Override
-protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    String projectIdParam = request.getParameter("id");
-    if (projectIdParam != null) {
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String projectIdParam = request.getParameter("id");
+        if (projectIdParam == null || projectIdParam.isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
         int projectId = Integer.parseInt(projectIdParam);
         projectService.deleteProject(projectId);
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write("Project deleted successfully");
-    } else {
-        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        response.getWriter().write("Project id parameter is required");
+        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        // Создаем ObjectMapper
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Создаем JSON объект для ответа
+        Map<String, String> jsonResponse = new HashMap<>();
+        jsonResponse.put("message", "Project deleted!");
+
+        // Преобразуем JSON объект в строку
+        String jsonStr = mapper.writeValueAsString(jsonResponse);
+
+        // Записываем JSON в тело ответа
+        PrintWriter out = response.getWriter();
+        out.print(jsonStr);
+        out.flush();
     }
-}
 }

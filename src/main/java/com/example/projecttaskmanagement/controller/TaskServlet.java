@@ -9,61 +9,78 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.example.projecttaskmanagement.dto.ProjectDTO;
 import com.example.projecttaskmanagement.dto.TaskDTO;
+import com.example.projecttaskmanagement.entity.Project;
+import com.example.projecttaskmanagement.mapper.ProjectMapper;
+import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
+import com.example.projecttaskmanagement.service.ProjectService;
 import com.example.projecttaskmanagement.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebServlet("/task")
 public class TaskServlet extends HttpServlet{
-    private final TaskService taskService;
-    private final ObjectMapper objectMapper;
+    private final TaskService taskService = new TaskService();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private  final ProjectService projectService = new ProjectService();
+    private final ProjectMapper projectMapper = new ProjectMapperImpl();
 
-    public TaskServlet(TaskService taskService, ObjectMapper objectMapper) {
-        this.taskService = taskService;
-        this.objectMapper = objectMapper;
+    public TaskServlet() {
+
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<TaskDTO> tasks = taskService.getAllTasks();
-
+        String tasksJson = objectMapper.writeValueAsString(tasks);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), tasks);
+        response.getWriter().write(tasksJson);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name");
-        String description = request.getParameter("description");
-        TaskDTO taskDTO = new TaskDTO();
-        taskDTO.setName(name);
-        taskDTO.setDescription(description);
+        TaskDTO taskDTO = objectMapper.readValue(request.getReader(), TaskDTO.class);
+        int projectId = taskDTO.getProjectId();
+        ProjectDTO projectDTO = projectService.getProjectById(projectId);
+        Project project = projectMapper.dtoToProject(projectDTO);
+        taskDTO.setProject(project);
         TaskDTO createdTask = taskService.createTask(taskDTO);
+        String createdTaskJson = objectMapper.writeValueAsString(createdTask);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), createdTask);
+        response.getWriter().write(createdTaskJson);
     }
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int taskId = Integer.parseInt(request.getParameter("id"));
-        String name = request.getParameter("name");
-        String description = request.getParameter("description");
-        TaskDTO taskDTO = new TaskDTO();
-        taskDTO.setId(taskId);
-        taskDTO.setName(name);
-        taskDTO.setDescription(description);
+        String[] parts = request.getPathInfo().split("/");
+        if (parts.length < 2) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        int taskId = Integer.parseInt(parts[1]);
+        TaskDTO taskDTO = objectMapper.readValue(request.getReader(), TaskDTO.class);
         TaskDTO updatedTask = taskService.updateTask(taskId, taskDTO);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), updatedTask);
+        if (updatedTask == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } else {
+            String updatedTaskJson = objectMapper.writeValueAsString(updatedTask);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(updatedTaskJson);
+        }
     }
 
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int taskId = Integer.parseInt(request.getParameter("id"));
+        String[] parts = request.getPathInfo().split("/");
+        if (parts.length < 2) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        int taskId = Integer.parseInt(parts[1]);
         taskService.deleteTask(taskId);
-        response.setStatus(HttpServletResponse.SC_OK);
+        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 }

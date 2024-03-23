@@ -1,6 +1,5 @@
 package com.example.projecttaskmanagement.entity;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import lombok.Data;
@@ -13,7 +12,6 @@ public class Task {
     private int id;
     private String name;
     private String description;
-    private LocalDate deadline;
     private boolean completed;
     private Project project;
     private List<Project> projects;

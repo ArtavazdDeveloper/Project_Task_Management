@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.entity.Project;
 import com.example.projecttaskmanagement.entity.Task;
 import com.example.projecttaskmanagement.repository.TaskRepository;
@@ -18,7 +19,7 @@ public class JdbcTaskRepository implements TaskRepository{
     private final Connection connection;
 
     public JdbcTaskRepository(Connection connection) {
-        this.connection = connection;
+        this.connection = DBConnectionProvider.connectionDB();
     }
 
     @Override
@@ -69,10 +70,10 @@ public class JdbcTaskRepository implements TaskRepository{
 
     @Override
     public Task save(Task task) {
-        String query = "INSERT INTO task (description, deadline, completed, project_id) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO task (name,description, completed, project_id) VALUES (?, ?, ?, ?)";
     try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-        statement.setString(1, task.getDescription());
-        statement.setDate(2, Date.valueOf(task.getDeadline()));
+        statement.setString(1, task.getName());
+        statement.setString(2, task.getDescription());
         statement.setBoolean(3, task.isCompleted());
         statement.setInt(4, task.getProject().getId());
         statement.executeUpdate();
@@ -92,7 +93,6 @@ public class JdbcTaskRepository implements TaskRepository{
         String query = "UPDATE task SET description = ?, deadline = ?, completed = ?, project_id = ? WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, task.getDescription());
-            statement.setDate(2, Date.valueOf(task.getDeadline()));
             statement.setBoolean(3, task.isCompleted());
             statement.setInt(4, task.getProject().getId());
             statement.setInt(5, task.getId());
@@ -117,7 +117,6 @@ public class JdbcTaskRepository implements TaskRepository{
         Task task = new Task();
         task.setId(resultSet.getInt("id"));
         task.setDescription(resultSet.getString("description"));
-        task.setDeadline(resultSet.getDate("deadline").toLocalDate());
         task.setCompleted(resultSet.getBoolean("completed"));
         int projectId = resultSet.getInt("project_id");
         Project project = new Project();

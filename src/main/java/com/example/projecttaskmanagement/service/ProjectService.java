@@ -2,20 +2,32 @@ package com.example.projecttaskmanagement.service;
 
 import java.util.List;
 
+import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.dto.ProjectDTO;
+import com.example.projecttaskmanagement.dto.TaskDTO;
+import com.example.projecttaskmanagement.dto.UserDTO;
 import com.example.projecttaskmanagement.entity.Project;
+import com.example.projecttaskmanagement.entity.Task;
 import com.example.projecttaskmanagement.entity.User;
 import com.example.projecttaskmanagement.mapper.ProjectMapper;
+import com.example.projecttaskmanagement.mapper.UserMapper;
+import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
+import com.example.projecttaskmanagement.mapper.impl.UserMapperImpl;
 import com.example.projecttaskmanagement.repository.ProjectRepository;
 
+import com.example.projecttaskmanagement.repository.impl.JdbcProjectRepository;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.mariadb.jdbc.Connection;
 
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ProjectService {
 
-    private final ProjectRepository projectRepository;
-    private final ProjectMapper projectMapper;
+    private ProjectRepository projectRepository = new JdbcProjectRepository(DBConnectionProvider.connectionDB());
+    private final ProjectMapper projectMapper = new ProjectMapperImpl();
+    private final  UserMapper userMapper = new UserMapperImpl();
+
 
     public List<ProjectDTO> getAllProjects() {
         List<Project> projects = projectRepository.findAll();
@@ -53,10 +65,32 @@ public class ProjectService {
     public void updateProjectsByUserId(int userId, User updatedUser) {
         List<Project> projects = projectRepository.findAllByUserId(userId);
         for (Project project : projects) {
-            project.setUser(updatedUser);
+            List<User> users = project.getUsers();
+            users.add(updatedUser);
+            project.setUsers(users);
             projectRepository.update(project);
         }
     }
+    public void addTaskToProject(int projectId, TaskDTO taskDTO) {
+        Task task = new Task();
+        task.setName(taskDTO.getName());
+        task.setDescription(taskDTO.getDescription());
+        task.setCompleted(taskDTO.isCompleted());
+        projectRepository.addTaskToProject(projectId, task);
+    }
+    public void addUserToProject(int projectId, int userId, UserDTO userDTO) {
+        Project project = projectRepository.findById(projectId);
+        if (project == null) {
+            return;
+        }
+        User user = userMapper.dtoToUser(userDTO);
+        user.setId(userId);
+        List<User> users = project.getUsers();
+        users.add(user);
+        project.setUsers(users);
+        projectRepository.update(project);
+    }
+
 
     public void deleteProjectsByUserId(int userId) {
         List<Project> projects = projectRepository.findAllByUserId(userId);

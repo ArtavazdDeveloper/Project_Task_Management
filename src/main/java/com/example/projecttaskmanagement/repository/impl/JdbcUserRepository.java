@@ -9,16 +9,17 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.entity.User;
 import com.example.projecttaskmanagement.repository.UserRepository;
 
 public class JdbcUserRepository implements UserRepository{
 
 
-    private final Connection connection;
+    private Connection connection = DBConnectionProvider.connectionDB();
 
     public JdbcUserRepository(Connection connection) {
-        this.connection = connection;
+       this.connection = connection;
     }
 
     @Override
@@ -53,6 +54,7 @@ public class JdbcUserRepository implements UserRepository{
 
     @Override
     public void save(User user) {
+
         String query = "INSERT INTO user (name, surname, email) VALUES (?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, user.getName());

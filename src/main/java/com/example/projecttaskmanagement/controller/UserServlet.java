@@ -13,28 +13,24 @@ import java.util.List;
 import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.dto.UserDTO;
 import com.example.projecttaskmanagement.mapper.impl.UserMapperImpl;
+import com.example.projecttaskmanagement.repository.UserRepository;
 import com.example.projecttaskmanagement.repository.impl.JdbcUserRepository;
+import com.example.projecttaskmanagement.service.ProjectService;
 import com.example.projecttaskmanagement.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Objects;
 
 @WebServlet("/users")
 public class UserServlet extends HttpServlet{
     
-    private final UserService userService;
-    private final ObjectMapper objectMapper;
+    private final UserService userService = new UserService();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public UserServlet() {
-        this.userService = new UserService(new JdbcUserRepository(DBConnectionProvider.getConnection()), new UserMapperImpl(), null, null);
-        this.objectMapper = new ObjectMapper();
-    }
 
-    public UserServlet(UserService userService, ObjectMapper objectMapper) {
-        this.userService = userService;
-        this.objectMapper = objectMapper;
     }
-
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<UserDTO> users = userService.getAllUsers();
 
         response.setContentType("application/json");
@@ -43,7 +39,7 @@ public class UserServlet extends HttpServlet{
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         BufferedReader reader = request.getReader();
         StringBuilder jsonBody = new StringBuilder();
         String line;
@@ -59,23 +55,32 @@ public class UserServlet extends HttpServlet{
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        BufferedReader reader = request.getReader();
-        StringBuilder jsonBody = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            jsonBody.append(line);
+        String[] parts = request.getPathInfo().split("/");
+        if (parts.length < 2) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
         }
-        UserDTO userDTO = objectMapper.readValue(jsonBody.toString(), UserDTO.class);
-        int userId = userDTO.getId();
+        int userId = Integer.parseInt(parts[1]);
+        UserDTO userDTO = objectMapper.readValue(request.getReader(), UserDTO.class);
         UserDTO updatedUser = userService.updateUser(userId, userDTO);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), updatedUser);
+        if (updatedUser == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } else {
+            String updatedUserJson = objectMapper.writeValueAsString(updatedUser);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(updatedUserJson);
+        }
     }
 
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int userId = Integer.parseInt(request.getParameter("id"));
+        String[] parts = request.getPathInfo().split("/");
+        if (parts.length < 2) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        int userId = Integer.parseInt(parts[1]);
         userService.deleteUser(userId);
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }

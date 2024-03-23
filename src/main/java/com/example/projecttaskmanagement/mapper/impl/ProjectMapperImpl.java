@@ -18,8 +18,6 @@ public class ProjectMapperImpl implements ProjectMapper{
         dto.setId(project.getId());
         dto.setName(project.getName());
         dto.setDescription(project.getDescription());
-        dto.setStartDate(project.getStartDate());
-        dto.setEndDate(project.getEndDate());
         return dto;
     }
 
@@ -29,8 +27,6 @@ public class ProjectMapperImpl implements ProjectMapper{
         project.setId(projectDTO.getId());
         project.setName(projectDTO.getName());
         project.setDescription(projectDTO.getDescription());
-        project.setStartDate(projectDTO.getStartDate());
-        project.setEndDate(projectDTO.getEndDate());
         return project;
     }
 
