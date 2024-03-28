@@ -9,11 +9,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.example.projecttaskmanagement.dto.ProjectDTO;
 import com.example.projecttaskmanagement.dto.TaskDTO;
-import com.example.projecttaskmanagement.entity.Project;
 import com.example.projecttaskmanagement.mapper.ProjectMapper;
 import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
+import com.example.projecttaskmanagement.repository.ProjectRepository;
 import com.example.projecttaskmanagement.service.ProjectService;
 import com.example.projecttaskmanagement.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class TaskServlet extends HttpServlet{
     private final TaskService taskService = new TaskService();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private  final ProjectService projectService = new ProjectService();
+    private ProjectRepository projectRepository;
+    private final ProjectService projectService = new ProjectService();
     private final ProjectMapper projectMapper = new ProjectMapperImpl();
 
     public TaskServlet() {
@@ -42,10 +42,8 @@ public class TaskServlet extends HttpServlet{
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         TaskDTO taskDTO = objectMapper.readValue(request.getReader(), TaskDTO.class);
         int projectId = taskDTO.getProjectId();
-        ProjectDTO projectDTO = projectService.getProjectById(projectId);
-        Project project = projectMapper.dtoToProject(projectDTO);
-        taskDTO.setProject(project);
-        TaskDTO createdTask = taskService.createTask(taskDTO);
+        int userId = taskDTO.getUserId();
+        TaskDTO createdTask = taskService.createTaskForProject(projectId, userId, taskDTO);
         String createdTaskJson = objectMapper.writeValueAsString(createdTask);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -59,7 +57,13 @@ public class TaskServlet extends HttpServlet{
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        int taskId = Integer.parseInt(parts[1]);
+        int taskId;
+        try {
+            taskId = Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
         TaskDTO taskDTO = objectMapper.readValue(request.getReader(), TaskDTO.class);
         TaskDTO updatedTask = taskService.updateTask(taskId, taskDTO);
         if (updatedTask == null) {
@@ -72,15 +76,13 @@ public class TaskServlet extends HttpServlet{
         }
     }
 
+
+
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String[] parts = request.getPathInfo().split("/");
-        if (parts.length < 2) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-        int taskId = Integer.parseInt(parts[1]);
+    public void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int taskId = Integer.parseInt(request.getParameter("id"));
         taskService.deleteTask(taskId);
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 }
+

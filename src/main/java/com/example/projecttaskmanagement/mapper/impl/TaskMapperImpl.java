@@ -15,6 +15,8 @@ public class TaskMapperImpl implements TaskMapper {
     @Override
     public TaskDTO taskToDto(Task task) {
         TaskDTO dto = new TaskDTO();
+        dto.setProjectId(task.getProjectId());
+        dto.setUserId(task.getUserId());
         dto.setId(task.getId());
         dto.setName(task.getName());
         dto.setDescription(task.getDescription());
@@ -28,7 +30,9 @@ public class TaskMapperImpl implements TaskMapper {
         task.setId(taskDTO.getId());
         task.setName(taskDTO.getName());
         task.setDescription(taskDTO.getDescription());
-        task.setCompleted(taskDTO.isCompleted());
+        task.setCompleted(taskDTO.getCompleted());
+        task.setProjectId(taskDTO.getProjectId());
+        task.setUserId(taskDTO.getUserId());
         return task;
     }
 

@@ -54,33 +54,24 @@ public class UserServlet extends HttpServlet{
     }
 
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String[] parts = request.getPathInfo().split("/");
-        if (parts.length < 2) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+    public void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        BufferedReader reader = request.getReader();
+        StringBuilder jsonBody = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            jsonBody.append(line);
         }
-        int userId = Integer.parseInt(parts[1]);
-        UserDTO userDTO = objectMapper.readValue(request.getReader(), UserDTO.class);
+        UserDTO userDTO = objectMapper.readValue(jsonBody.toString(), UserDTO.class);
+        int userId = userDTO.getId();
         UserDTO updatedUser = userService.updateUser(userId, userDTO);
-        if (updatedUser == null) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        } else {
-            String updatedUserJson = objectMapper.writeValueAsString(updatedUser);
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(updatedUserJson);
-        }
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        objectMapper.writeValue(response.getWriter(), updatedUser);
     }
 
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String[] parts = request.getPathInfo().split("/");
-        if (parts.length < 2) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-        int userId = Integer.parseInt(parts[1]);
+    public void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int userId = Integer.parseInt(request.getParameter("id"));
         userService.deleteUser(userId);
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }

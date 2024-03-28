@@ -19,7 +19,7 @@ public class JdbcUserRepository implements UserRepository{
     private Connection connection = DBConnectionProvider.connectionDB();
 
     public JdbcUserRepository(Connection connection) {
-       this.connection = connection;
+        this.connection = connection;
     }
 
     @Override

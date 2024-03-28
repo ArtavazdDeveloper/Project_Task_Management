@@ -13,6 +13,8 @@ public class Task {
     private String name;
     private String description;
     private boolean completed;
+    private int projectId;
+    private int userId;
     private Project project;
     private List<Project> projects;
     private User user;

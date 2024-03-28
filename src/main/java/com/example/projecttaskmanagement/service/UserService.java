@@ -7,9 +7,11 @@ import com.example.projecttaskmanagement.dto.UserDTO;
 import com.example.projecttaskmanagement.entity.User;
 import com.example.projecttaskmanagement.mapper.ProjectMapper;
 import com.example.projecttaskmanagement.mapper.UserMapper;
+import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
 import com.example.projecttaskmanagement.mapper.impl.UserMapperImpl;
 import com.example.projecttaskmanagement.repository.ProjectRepository;
 import com.example.projecttaskmanagement.repository.UserRepository;
+import com.example.projecttaskmanagement.repository.impl.JdbcProjectRepository;
 import com.example.projecttaskmanagement.repository.impl.JdbcUserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ public class UserService {
     private UserRepository userRepository = new JdbcUserRepository(DBConnectionProvider.connectionDB());
     private final UserMapper userMapper = new UserMapperImpl();
     private final TaskService taskService = new TaskService();
+    private ProjectRepository projectRepository = new JdbcProjectRepository(DBConnectionProvider.connectionDB());
+    private ProjectMapper projectMapper = new ProjectMapperImpl();
     private final ProjectService projectService = new ProjectService();
 
 
@@ -62,8 +66,8 @@ public class UserService {
     }
 
     public void deleteUser(int id) {
-        taskService.deleteTasksByUserId(id);
-        projectService.deleteProjectsByUserId(id);
+        //taskService.deleteTasksByUserId(id);
+        //projectService.deleteProjectsByUserId(id);
         userRepository.delete(id);
     }
 

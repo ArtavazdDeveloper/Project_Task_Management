@@ -1,4 +1,9 @@
 package com.example.projecttaskmanagement.controller;
+import com.example.projecttaskmanagement.db.DBConnectionProvider;
+import com.example.projecttaskmanagement.mapper.ProjectMapper;
+import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
+import com.example.projecttaskmanagement.repository.ProjectRepository;
+import com.example.projecttaskmanagement.repository.impl.JdbcProjectRepository;
 import com.example.projecttaskmanagement.service.ProjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -10,22 +15,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.time.LocalDate;
-import java.util.HashMap;
+import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 
-import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.dto.ProjectDTO;
-import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
-import com.example.projecttaskmanagement.repository.impl.JdbcProjectRepository;
-import com.example.projecttaskmanagement.service.ProjectService;
 
 
 @WebServlet("/projects")
 public class ProjectServlet extends HttpServlet{
 
+    private ProjectRepository projectRepository;
+    private ProjectMapper projectMapper;
     private final ProjectService projectService = new ProjectService();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -75,31 +75,9 @@ public class ProjectServlet extends HttpServlet{
 
 
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String projectIdParam = request.getParameter("id");
-        if (projectIdParam == null || projectIdParam.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-        int projectId = Integer.parseInt(projectIdParam);
+    public void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int projectId = Integer.parseInt(request.getParameter("id"));
         projectService.deleteProject(projectId);
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-
-        // Создаем ObjectMapper
-        ObjectMapper mapper = new ObjectMapper();
-
-        // Создаем JSON объект для ответа
-        Map<String, String> jsonResponse = new HashMap<>();
-        jsonResponse.put("message", "Project deleted!");
-
-        // Преобразуем JSON объект в строку
-        String jsonStr = mapper.writeValueAsString(jsonResponse);
-
-        // Записываем JSON в тело ответа
-        PrintWriter out = response.getWriter();
-        out.print(jsonStr);
-        out.flush();
     }
 }

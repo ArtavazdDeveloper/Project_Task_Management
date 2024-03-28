@@ -1,5 +1,6 @@
 package com.example.projecttaskmanagement.service;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import com.example.projecttaskmanagement.db.DBConnectionProvider;
@@ -16,7 +17,6 @@ import com.example.projecttaskmanagement.mapper.impl.UserMapperImpl;
 import com.example.projecttaskmanagement.repository.ProjectRepository;
 
 import com.example.projecttaskmanagement.repository.impl.JdbcProjectRepository;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.mariadb.jdbc.Connection;
 
@@ -25,8 +25,10 @@ import org.mariadb.jdbc.Connection;
 public class ProjectService {
 
     private ProjectRepository projectRepository = new JdbcProjectRepository(DBConnectionProvider.connectionDB());
-    private final ProjectMapper projectMapper = new ProjectMapperImpl();
+
+    private ProjectMapper projectMapper = new ProjectMapperImpl();
     private final  UserMapper userMapper = new UserMapperImpl();
+
 
 
     public List<ProjectDTO> getAllProjects() {
@@ -54,9 +56,15 @@ public class ProjectService {
         Project projectToUpdate = projectMapper.dtoToProject(projectDTO);
         projectToUpdate.setId(id);
         projectRepository.update(projectToUpdate);
-        projectRepository.update(projectToUpdate);
-        return projectDTO;
+
+        // Получить обновленный проект из репозитория
+        Project updatedProject = projectRepository.findById(id);
+
+        // Сопоставить обновленный проект с помощью projectMapper
+        return projectMapper.projectToDTO(updatedProject);
     }
+
+
 
     public void deleteProject(int id) {
         projectRepository.delete(id);
@@ -75,7 +83,7 @@ public class ProjectService {
         Task task = new Task();
         task.setName(taskDTO.getName());
         task.setDescription(taskDTO.getDescription());
-        task.setCompleted(taskDTO.isCompleted());
+        task.setCompleted(taskDTO.getCompleted());
         projectRepository.addTaskToProject(projectId, task);
     }
     public void addUserToProject(int projectId, int userId, UserDTO userDTO) {
