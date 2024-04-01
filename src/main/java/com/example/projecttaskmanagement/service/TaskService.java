@@ -3,9 +3,9 @@ package com.example.projecttaskmanagement.service;
 import java.util.List;
 
 import com.example.projecttaskmanagement.db.DBConnectionProvider;
-import com.example.projecttaskmanagement.dto.ProjectDTO;
-import com.example.projecttaskmanagement.dto.TaskDTO;
-import com.example.projecttaskmanagement.dto.UserDTO;
+import com.example.projecttaskmanagement.dto.ProjectDto;
+import com.example.projecttaskmanagement.dto.TaskDto;
+import com.example.projecttaskmanagement.dto.UserDto;
 import com.example.projecttaskmanagement.entity.Project;
 import com.example.projecttaskmanagement.entity.Task;
 import com.example.projecttaskmanagement.entity.User;
@@ -20,26 +20,31 @@ import com.example.projecttaskmanagement.repository.TaskRepository;
 import com.example.projecttaskmanagement.repository.impl.JdbcTaskRepository;
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
+
 public class TaskService {
   
-    private final TaskRepository taskRepository = new JdbcTaskRepository(DBConnectionProvider.connectionDB());
-
+    private final TaskRepository taskRepository = new JdbcTaskRepository(DBConnectionProvider.getDataSource());
     private final TaskMapper taskMapper = new TaskMapperImpl();
-    private final ProjectService projectService = new ProjectService();
-    private  final UserService userService = new UserService();
-    private  final ProjectMapper projectMapper = new ProjectMapperImpl();
-    private  final UserMapper userMapper = new UserMapperImpl();
+    private final ProjectService projectService;
+    private final UserService userService;
+    private final ProjectMapper projectMapper;
+    private final UserMapper userMapper;
+
+    public TaskService(ProjectService projectService, UserService userService, ProjectMapper projectMapper, UserMapper userMapper) {
+        this.projectService = projectService;
+        this.userService = userService;
+        this.projectMapper = projectMapper;
+        this.userMapper = userMapper;
+    }
 
 
 
-
-    public List<TaskDTO> getAllTasks() {
+    public List<TaskDto> getAllTasks() {
         List<Task> tasks = taskRepository.findAll();
         return taskMapper.taskListToDTOList(tasks);
     }
 
-    public TaskDTO getTaskById(int id) {
+    public TaskDto getTaskById(int id) {
         Task task = taskRepository.findById(id);
         if (task == null) {
             return null;
@@ -47,33 +52,33 @@ public class TaskService {
         return taskMapper.taskToDto(task);
     }
 
-    public TaskDTO createTask(TaskDTO taskDTO) {
+    public TaskDto createTask(TaskDto taskDTO) {
         Task task = taskMapper.dtoToTask(taskDTO);
         task = taskRepository.save(task);
         return taskMapper.taskToDto(task);
     }
 
-    public TaskDTO updateTask(int taskId, TaskDTO taskDTO) {
+    public TaskDto updateTask(int taskId, TaskDto taskDTO) {
         Task existingTask = taskRepository.findById(taskId);
         if (existingTask == null) {
-            return null; // Задача не найдена, возвращаем null
+            return null;
         }
-
-        // Обновляем поля задачи
         if (taskDTO.getName() != null) {
             existingTask.setName(taskDTO.getName());
         }
         if (taskDTO.getDescription() != null) {
             existingTask.setDescription(taskDTO.getDescription());
         }
-        if (taskDTO.getCompleted() != null) {
-            existingTask.setCompleted(taskDTO.getCompleted());
+        if (taskDTO.isCompleted() != false) {
+            existingTask.setCompleted(taskDTO.isCompleted());
         }
-
-        // Сохраняем обновленную задачу
+        if (taskDTO.getUserId() != 0) {
+            existingTask.setUser_id(taskDTO.getUserId());
+        }
+        if(taskDTO.getProjectId() != 0){
+            existingTask.setProject_id(taskDTO.getProjectId());
+        }
         taskRepository.update(existingTask);
-
-        // Возвращаем обновленную задачу
         return taskMapper.taskToDto(existingTask);
     }
 
@@ -81,12 +86,12 @@ public class TaskService {
         taskRepository.delete(id);
     }
 
-    public List<TaskDTO> getTasksByProjectId(int projectId) {
+    public List<TaskDto> getTasksByProjectId(int projectId) {
         List<Task> tasks = taskRepository.findAllByProjectId(projectId);
         return taskMapper.taskListToDTOList(tasks);
     }
 
-    public List<TaskDTO> getTasksByUserId(int userId) {
+    public List<TaskDto> getTasksByUserId(int userId) {
         List<Task> tasks = taskRepository.findAllByUserId(userId);
         return taskMapper.taskListToDTOList(tasks);
     }
@@ -98,12 +103,12 @@ public class TaskService {
             taskRepository.update(task);
         }
     }
-    public TaskDTO createTaskForProject(int projectId, int userId, TaskDTO taskDTO) {
-        ProjectDTO projectDTO = projectService.getProjectById(projectId);
+    public TaskDto createTaskForProject(int projectId, int userId, TaskDto taskDTO) {
+        ProjectDto projectDTO = projectService.getProjectById(projectId);
         if (projectDTO == null) {
             return null;
         }
-        UserDTO userDTO = userService.getUserById(userId);
+        UserDto userDTO = userService.getUserById(userId);
         if (userDTO == null){
             return null;
         }
@@ -115,7 +120,7 @@ public class TaskService {
     }
 
 
-    public Project convertToProject(ProjectDTO projectDTO) {
+    public Project convertToProject(ProjectDto projectDTO) {
         Project project = new Project();
         project.setId(projectDTO.getId());
         project.setName(projectDTO.getName());

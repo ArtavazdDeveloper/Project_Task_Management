@@ -3,7 +3,7 @@ package com.example.projecttaskmanagement.service;
 import java.util.List;
 
 import com.example.projecttaskmanagement.db.DBConnectionProvider;
-import com.example.projecttaskmanagement.dto.UserDTO;
+import com.example.projecttaskmanagement.dto.UserDto;
 import com.example.projecttaskmanagement.entity.User;
 import com.example.projecttaskmanagement.mapper.ProjectMapper;
 import com.example.projecttaskmanagement.mapper.UserMapper;
@@ -14,38 +14,46 @@ import com.example.projecttaskmanagement.repository.UserRepository;
 import com.example.projecttaskmanagement.repository.impl.JdbcProjectRepository;
 import com.example.projecttaskmanagement.repository.impl.JdbcUserRepository;
 
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 
-@RequiredArgsConstructor
 public class UserService {
 
 
-    private UserRepository userRepository = new JdbcUserRepository(DBConnectionProvider.connectionDB());
+    private final UserRepository userRepository = new JdbcUserRepository(DBConnectionProvider.getDataSource());
     private final UserMapper userMapper = new UserMapperImpl();
-    private final TaskService taskService = new TaskService();
-    private ProjectRepository projectRepository = new JdbcProjectRepository(DBConnectionProvider.connectionDB());
-    private ProjectMapper projectMapper = new ProjectMapperImpl();
-    private final ProjectService projectService = new ProjectService();
+    private final TaskService taskService;
+    private final ProjectRepository projectRepository;
+    private final ProjectMapper projectMapper;
+    private final ProjectService projectService;
+
+    public UserService(TaskService taskService, ProjectRepository projectRepository, ProjectMapper projectMapper, ProjectService projectService) {
+        this.taskService = taskService;
+        this.projectRepository = projectRepository;
+        this.projectMapper = projectMapper;
+        this.projectService = projectService;
+    }
 
 
-    public List<UserDTO> getAllUsers() {
+
+    public List<UserDto> getAllUsers() {
         List<User> users = userRepository.findAll();
         return userMapper.userListToDTOList(users);
     }
 
-    public UserDTO getUserById(int id) {
+    public UserDto getUserById(int id) {
         User user = userRepository.findById(id);
         return userMapper.userToDTO(user);
     }
 
-    public UserDTO createUser(UserDTO userDTO) {
+    public UserDto createUser(UserDto userDTO) {
         User user = userMapper.dtoToUser(userDTO);
         userRepository.save(user);
         return userMapper.userToDTO(user);
     }
 
-    public UserDTO updateUser(int id, UserDTO userDTO) {
+    public UserDto updateUser(int id, UserDto userDTO) {
         User existingUser = userRepository.findById(id);
         if (existingUser == null) {
             return null;
@@ -60,8 +68,8 @@ public class UserService {
             existingUser.setEmail(userDTO.getEmail());
         }
         userRepository.update(existingUser);
-        taskService.updateTasksByUserId(id, existingUser);
-        projectService.updateProjectsByUserId(id, existingUser);
+        //taskService.updateTasksByUserId(id, existingUser);
+        //projectService.updateProjectsByUserId(id, existingUser);
         return userMapper.userToDTO(existingUser);
     }
 

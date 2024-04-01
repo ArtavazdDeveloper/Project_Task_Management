@@ -3,7 +3,7 @@ package com.example.projecttaskmanagement.mapper.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.example.projecttaskmanagement.dto.TaskDTO;
+import com.example.projecttaskmanagement.dto.TaskDto;
 import com.example.projecttaskmanagement.entity.Task;
 import com.example.projecttaskmanagement.mapper.TaskMapper;
 
@@ -13,10 +13,10 @@ import lombok.RequiredArgsConstructor;
 public class TaskMapperImpl implements TaskMapper {
 
     @Override
-    public TaskDTO taskToDto(Task task) {
-        TaskDTO dto = new TaskDTO();
-        dto.setProjectId(task.getProjectId());
-        dto.setUserId(task.getUserId());
+    public TaskDto taskToDto(Task task) {
+        TaskDto dto = new TaskDto();
+        dto.setProjectId(task.getProject_id());
+        dto.setUserId(task.getUser_id());
         dto.setId(task.getId());
         dto.setName(task.getName());
         dto.setDescription(task.getDescription());
@@ -25,19 +25,19 @@ public class TaskMapperImpl implements TaskMapper {
     }
 
     @Override
-    public Task dtoToTask(TaskDTO taskDTO) {
+    public Task dtoToTask(TaskDto taskDTO) {
         Task task = new Task();
         task.setId(taskDTO.getId());
         task.setName(taskDTO.getName());
         task.setDescription(taskDTO.getDescription());
-        task.setCompleted(taskDTO.getCompleted());
-        task.setProjectId(taskDTO.getProjectId());
-        task.setUserId(taskDTO.getUserId());
+        task.setCompleted(taskDTO.isCompleted());
+        task.setProject_id(taskDTO.getProjectId());
+        task.setUser_id(taskDTO.getUserId());
         return task;
     }
 
     @Override
-    public List<TaskDTO> taskListToDTOList(List<Task> tasks) {
+    public List<TaskDto> taskListToDTOList(List<Task> tasks) {
         return tasks.stream().map(this::taskToDto).collect(Collectors.toList());
     }
 }

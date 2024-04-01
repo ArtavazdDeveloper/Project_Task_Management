@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
 import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.entity.User;
 import com.example.projecttaskmanagement.repository.UserRepository;
@@ -16,16 +18,18 @@ import com.example.projecttaskmanagement.repository.UserRepository;
 public class JdbcUserRepository implements UserRepository{
 
 
-    private Connection connection = DBConnectionProvider.connectionDB();
+    private final DataSource dataSource;
 
-    public JdbcUserRepository(Connection connection) {
-        this.connection = connection;
+    public JdbcUserRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
+    
     @Override
     public User findById(int id) {
         String query = "SELECT * FROM user WHERE id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
@@ -41,7 +45,8 @@ public class JdbcUserRepository implements UserRepository{
     public List<User> findAll() {
         List<User> users = new ArrayList<>();
         String query = "SELECT * FROM user";
-        try (Statement statement = connection.createStatement()) {
+        try (Connection connection = dataSource.getConnection();
+            Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery(query);
             while (resultSet.next()) {
                 users.add(extractUserFromResultSet(resultSet));
@@ -56,7 +61,8 @@ public class JdbcUserRepository implements UserRepository{
     public void save(User user) {
 
         String query = "INSERT INTO user (name, surname, email) VALUES (?, ?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, user.getName());
             statement.setString(2, user.getSurname());
             statement.setString(3, user.getEmail());
@@ -73,7 +79,8 @@ public class JdbcUserRepository implements UserRepository{
     @Override
     public void update(User user) {
         String query = "UPDATE user SET name = ?, surname = ?, email = ? WHERE id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, user.getName());
             statement.setString(2, user.getSurname());
             statement.setString(3, user.getEmail());
@@ -87,7 +94,8 @@ public class JdbcUserRepository implements UserRepository{
     @Override
     public void delete(int id) {
         String query = "DELETE FROM user WHERE id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, id);
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -99,7 +107,8 @@ public class JdbcUserRepository implements UserRepository{
     public List<User> findAllByTaskId(int taskId) {
         List<User> users = new ArrayList<>();
         String query = "SELECT * FROM user WHERE id IN (SELECT user_id FROM task_user WHERE task_id = ?)";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, taskId);
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {

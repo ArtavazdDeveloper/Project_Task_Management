@@ -3,12 +3,15 @@ package com.example.projecttaskmanagement.entity;
 
 import java.util.List;
 
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
+
+
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Project {
 
     private int id;
@@ -16,6 +19,4 @@ public class Project {
     private String description;
     private List<Task> tasks;
     private List<User> users;
-
-
 }

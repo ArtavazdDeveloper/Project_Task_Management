@@ -14,18 +14,21 @@ import com.example.projecttaskmanagement.entity.Project;
 import com.example.projecttaskmanagement.entity.Task;
 import com.example.projecttaskmanagement.repository.ProjectRepository;
 
+import javax.sql.DataSource;
+
 public class JdbcProjectRepository implements ProjectRepository{
 
-    private Connection connection = DBConnectionProvider.connectionDB();
+    private final DataSource dataSource;
 
-    public JdbcProjectRepository(Connection connection) {
-        this.connection = connection;
+    public JdbcProjectRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
     public Project findById(int id) {
         String query = "SELECT * FROM projects WHERE id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
@@ -41,7 +44,8 @@ public class JdbcProjectRepository implements ProjectRepository{
     public List<Project> findAll() {
         List<Project> projects = new ArrayList<>();
         String query = "SELECT * FROM projects";
-        try (Statement statement = connection.createStatement()) {
+        try (Connection connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery(query);
             while (resultSet.next()) {
                 projects.add(extractProjectFromResultSet(resultSet));
@@ -55,7 +59,8 @@ public class JdbcProjectRepository implements ProjectRepository{
     @Override
     public void save(Project project) {
         String query = "INSERT INTO projects (name, description) VALUES (?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, project.getName());
             statement.setString(2, project.getDescription());
             statement.executeUpdate();
@@ -71,7 +76,8 @@ public class JdbcProjectRepository implements ProjectRepository{
     @Override
     public void update(Project project) {
         String query = "UPDATE projects SET name = ?, description = ? WHERE id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, project.getName());
             statement.setString(2, project.getDescription());
 
@@ -85,7 +91,8 @@ public class JdbcProjectRepository implements ProjectRepository{
     @Override
     public void delete(int id) {
         String query = "DELETE FROM projects WHERE id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, id);
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -103,12 +110,14 @@ public class JdbcProjectRepository implements ProjectRepository{
 
     @Override
     public void addTaskToProject(int projectId, Task task) {
-        String query = "INSERT INTO tasks (name, description, completed, project_id) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+        String query = "INSERT INTO task (name, description, completed, project_id, user_id) VALUES (?, ?, ?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, task.getName());
             statement.setString(2, task.getDescription());
             statement.setBoolean(3, task.isCompleted());
             statement.setInt(4, projectId);
+            statement.setInt(5, task.getUser_id());
             statement.executeUpdate();
             ResultSet generatedKeys = statement.getGeneratedKeys();
             if (generatedKeys.next()) {
@@ -123,7 +132,8 @@ public class JdbcProjectRepository implements ProjectRepository{
     public List<Project> findAllByUserId(int userId) {
         List<Project> projects = new ArrayList<>();
         String query = "SELECT * FROM projects WHERE user_id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, userId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {

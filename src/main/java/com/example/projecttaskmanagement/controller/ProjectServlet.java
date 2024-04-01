@@ -1,9 +1,6 @@
 package com.example.projecttaskmanagement.controller;
-import com.example.projecttaskmanagement.db.DBConnectionProvider;
 import com.example.projecttaskmanagement.mapper.ProjectMapper;
-import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
 import com.example.projecttaskmanagement.repository.ProjectRepository;
-import com.example.projecttaskmanagement.repository.impl.JdbcProjectRepository;
 import com.example.projecttaskmanagement.service.ProjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -15,10 +12,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
-import com.example.projecttaskmanagement.dto.ProjectDTO;
+import com.example.projecttaskmanagement.dto.ProjectDto;
 
 
 @WebServlet("/projects")
@@ -38,7 +34,7 @@ public class ProjectServlet extends HttpServlet{
     @Override
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        List<ProjectDTO> projects = projectService.getAllProjects();
+        List<ProjectDto> projects = projectService.getAllProjects();
         String projectsJson = objectMapper.writeValueAsString(projects);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -47,8 +43,8 @@ public class ProjectServlet extends HttpServlet{
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        ProjectDTO projectDTO = objectMapper.readValue(request.getReader(), ProjectDTO.class);
-        ProjectDTO createdProject = projectService.createProject(projectDTO);
+        ProjectDto projectDTO = objectMapper.readValue(request.getReader(), ProjectDto.class);
+        ProjectDto createdProject = projectService.createProject(projectDTO);
         String createdProjectJson = objectMapper.writeValueAsString(createdProject);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -65,9 +61,9 @@ public class ProjectServlet extends HttpServlet{
         while ((line = reader.readLine()) != null) {
             jsonBody.append(line);
         }
-        ProjectDTO projectDTO = objectMapper.readValue(jsonBody.toString(), ProjectDTO.class);
+        ProjectDto projectDTO = objectMapper.readValue(jsonBody.toString(), ProjectDto.class);
         int projectId = projectDTO.getId();
-        ProjectDTO updatedProject = projectService.updateProject(projectId, projectDTO);
+        ProjectDto updatedProject = projectService.updateProject(projectId, projectDTO);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), updatedProject);

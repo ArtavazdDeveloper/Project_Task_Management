@@ -1,5 +1,6 @@
 package com.example.projecttaskmanagement.controller;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.List;
 
@@ -9,29 +10,39 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.example.projecttaskmanagement.dto.TaskDTO;
+import com.example.projecttaskmanagement.dto.TaskDto;
 import com.example.projecttaskmanagement.mapper.ProjectMapper;
+import com.example.projecttaskmanagement.mapper.TaskMapper;
+import com.example.projecttaskmanagement.mapper.UserMapper;
 import com.example.projecttaskmanagement.mapper.impl.ProjectMapperImpl;
+import com.example.projecttaskmanagement.mapper.impl.TaskMapperImpl;
+import com.example.projecttaskmanagement.mapper.impl.UserMapperImpl;
 import com.example.projecttaskmanagement.repository.ProjectRepository;
 import com.example.projecttaskmanagement.service.ProjectService;
 import com.example.projecttaskmanagement.service.TaskService;
+import com.example.projecttaskmanagement.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebServlet("/task")
 public class TaskServlet extends HttpServlet{
-    private final TaskService taskService = new TaskService();
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private ProjectRepository projectRepository;
-    private final ProjectService projectService = new ProjectService();
-    private final ProjectMapper projectMapper = new ProjectMapperImpl();
+    
+    private TaskService taskService;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-    public TaskServlet() {
-
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        ProjectService projectService = new ProjectService();
+        UserService userService = new UserService(taskService, null, null, projectService);
+        TaskMapper taskMapper = new TaskMapperImpl();
+        UserMapper userMapper = new UserMapperImpl();
+        ProjectMapper projectMapper = new ProjectMapperImpl();
+        this.taskService = new TaskService(projectService, userService, projectMapper, userMapper);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        List<TaskDTO> tasks = taskService.getAllTasks();
+        List<TaskDto> tasks = taskService.getAllTasks();
         String tasksJson = objectMapper.writeValueAsString(tasks);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -40,10 +51,10 @@ public class TaskServlet extends HttpServlet{
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        TaskDTO taskDTO = objectMapper.readValue(request.getReader(), TaskDTO.class);
+        TaskDto taskDTO = objectMapper.readValue(request.getReader(), TaskDto.class);
         int projectId = taskDTO.getProjectId();
         int userId = taskDTO.getUserId();
-        TaskDTO createdTask = taskService.createTaskForProject(projectId, userId, taskDTO);
+        TaskDto createdTask = taskService.createTaskForProject(projectId, userId, taskDTO);
         String createdTaskJson = objectMapper.writeValueAsString(createdTask);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -52,30 +63,23 @@ public class TaskServlet extends HttpServlet{
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String[] parts = request.getPathInfo().split("/");
-        if (parts.length < 2) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+        BufferedReader reader = request.getReader();
+        StringBuilder jsonBody = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            jsonBody.append(line);
         }
-        int taskId;
-        try {
-            taskId = Integer.parseInt(parts[1]);
-        } catch (NumberFormatException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-        TaskDTO taskDTO = objectMapper.readValue(request.getReader(), TaskDTO.class);
-        TaskDTO updatedTask = taskService.updateTask(taskId, taskDTO);
+        TaskDto taskDTO = objectMapper.readValue(jsonBody.toString(), TaskDto.class);
+        int taskId = taskDTO.getId(); // Предположим, что в объекте TaskDto есть метод getId() для получения идентификатора задачи
+        TaskDto updatedTask = taskService.updateTask(taskId, taskDTO);
         if (updatedTask == null) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Если задача не найдена, установите статус 404
         } else {
-            String updatedTaskJson = objectMapper.writeValueAsString(updatedTask);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(updatedTaskJson);
+            objectMapper.writeValue(response.getWriter(), updatedTask);
         }
     }
-
 
 
     @Override

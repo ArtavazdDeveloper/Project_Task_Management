@@ -10,28 +10,33 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.List;
 
-import com.example.projecttaskmanagement.db.DBConnectionProvider;
-import com.example.projecttaskmanagement.dto.UserDTO;
-import com.example.projecttaskmanagement.mapper.impl.UserMapperImpl;
-import com.example.projecttaskmanagement.repository.UserRepository;
-import com.example.projecttaskmanagement.repository.impl.JdbcUserRepository;
+import com.example.projecttaskmanagement.dto.UserDto;
+import com.example.projecttaskmanagement.mapper.ProjectMapper;
+import com.example.projecttaskmanagement.repository.ProjectRepository;
 import com.example.projecttaskmanagement.service.ProjectService;
+import com.example.projecttaskmanagement.service.TaskService;
 import com.example.projecttaskmanagement.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Objects;
 
 @WebServlet("/users")
 public class UserServlet extends HttpServlet{
-    
-    private final UserService userService = new UserService();
+
+    private TaskService taskService;
+    private UserService userService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public UserServlet() {
-
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        // Инициализируем зависимости в методе init
+        this.taskService = new TaskService(null, userService, null, null);
+        this.userService = new UserService(taskService, null, null, null);
     }
+
+    
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        List<UserDTO> users = userService.getAllUsers();
+        List<UserDto> users = userService.getAllUsers();
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -46,13 +51,12 @@ public class UserServlet extends HttpServlet{
         while ((line = reader.readLine()) != null) {
             jsonBody.append(line);
         }
-        UserDTO userDTO = objectMapper.readValue(jsonBody.toString(), UserDTO.class);
-        UserDTO createdUser = userService.createUser(userDTO);
+        UserDto userDTO = objectMapper.readValue(jsonBody.toString(), UserDto.class);
+        UserDto createdUser = userService.createUser(userDTO);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), createdUser);
     }
-
     @Override
     public void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         BufferedReader reader = request.getReader();
@@ -61,13 +65,14 @@ public class UserServlet extends HttpServlet{
         while ((line = reader.readLine()) != null) {
             jsonBody.append(line);
         }
-        UserDTO userDTO = objectMapper.readValue(jsonBody.toString(), UserDTO.class);
+        UserDto userDTO = objectMapper.readValue(jsonBody.toString(), UserDto.class);
         int userId = userDTO.getId();
-        UserDTO updatedUser = userService.updateUser(userId, userDTO);
+        UserDto updatedUser = userService.updateUser(userId, userDTO);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(), updatedUser);
     }
+
 
     @Override
     public void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

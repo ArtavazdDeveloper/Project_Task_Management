@@ -1,6 +1,6 @@
 package com.example.projecttaskmanagement.mapper.impl;
 
-import com.example.projecttaskmanagement.dto.UserDTO;
+import com.example.projecttaskmanagement.dto.UserDto;
 import com.example.projecttaskmanagement.entity.User;
 import com.example.projecttaskmanagement.mapper.ProjectMapper;
 import com.example.projecttaskmanagement.mapper.TaskMapper;
@@ -31,8 +31,8 @@ public class UserMapperImpl implements UserMapper {
 
 
     @Override
-    public UserDTO userToDTO(User user) {
-        UserDTO userDTO = new UserDTO();
+    public UserDto userToDTO(User user) {
+        UserDto userDTO = new UserDto();
         userDTO.setId(user.getId());
         userDTO.setName(user.getName());
         userDTO.setSurname(user.getSurname());
@@ -41,7 +41,7 @@ public class UserMapperImpl implements UserMapper {
     }
 
     @Override
-    public User dtoToUser(UserDTO userDTO) {
+    public User dtoToUser(UserDto userDTO) {
         User user = new User();
         user.setId(userDTO.getId());
         user.setName(userDTO.getName());
@@ -51,7 +51,7 @@ public class UserMapperImpl implements UserMapper {
     }
 
     @Override
-    public List<UserDTO> userListToDTOList(List<User> users) {
+    public List<UserDto> userListToDTOList(List<User> users) {
         return users.stream().map(this::userToDTO).collect(Collectors.toList());
     }
 }
